@@ -3,19 +3,18 @@ import datetime
 from airflow.decorators import dag, task
 
 markdown_text = """
-### ETL Process for Heart Disease Data
-
-This DAG extracts information from the original CSV file stored in the UCI Machine Learning Repository of the 
-[Heart Disease repository](https://archive.ics.uci.edu/dataset/45/heart+disease). 
-It preprocesses the data by creating dummy variables and scaling numerical features.
-    
-After preprocessing, the data is saved back into a S3 bucket as two separate CSV files: one for training and one for 
-testing. The split between the training and testing datasets is 70/30 and they are stratified.
+### ETL Student Perfomance Dataset.
+In this DAG, data is used from https://www.kaggle.com/datasets/harshadapatil31/student-performance-and-study-habits-dataset/data
+The flow is:
+    . Download raw data
+    . Store it in a s3 bucket.
+    . Preprocessed using sklearn column trasnformer
+    . Stores the processed data splitted and the column trasnformer's .joblib
+All data stored is going to be located at s3://data/student_performance/YYMMDDHHMMSS/
 """
 
-
 default_args = {
-    'owner': "Facundo Adrian Lucianna",
+    'owner': "Grupo 4",
     'depends_on_past': False,
     'schedule_interval': None,
     'retries': 1,
@@ -23,272 +22,441 @@ default_args = {
     'dagrun_timeout': datetime.timedelta(minutes=15)
 }
 
+# Define what the ETL  expects to receive and treatment to be done
+expected_features = {
+    'student_id':{
+        'type':'int64',
+        'transform': 'drop', 
+    },
+    'gender':{
+        'type':'category',
+        'valid': ['Female', 'Male'],
+        'transform': 'ohe'
+    },
+    'study_time_hours':{
+        'type':'float64',
+        'transform': 'num',
+    },
+    'attendance_percent':{
+        'type':'float64',
+        'transform': 'num',
+    },
+    'sleep_hours':{
+        'type':'float64',
+        'transform': 'num',
+    },
+    'parental_education':{
+        'type':'category',
+        'valid': ['High School', 'Bachelors', 'Masters', 'PhD'],
+        'transform': 'ohe'
+    },
+    'internet_access':{
+        'type':'category',
+        'valid': ['Yes', 'No'],
+        'transform': 'ohe'
+    },
+    'extracurricular_activities':{
+        'type':'category',
+        'valid': ['Yes', 'No'],
+        'transform': 'ohe'
+    },
+    'part_time_job':{
+        'type':'category',
+        'valid': ['Yes', 'No'],
+        'transform': 'ohe'
+    },
+    'previous_grade':{
+        'type':'float64',
+        'transform': 'num', 
+    },
+    'final_exam_score':{
+        'type':'float64',
+        'transform': 'num', 
+    },
+    'final_grade':{
+        'type':'category',
+        'valid': ['A', 'B', 'C', 'D', 'E', 'F'],
+        'transform': 'label'
+    }
+}
+
 
 @dag(
-    dag_id="process_etl_heart_data",
-    description="ETL process for heart data, separating the dataset into training and testing sets.",
+    dag_id="process_etl_student_performance",
+    description="ETL process for student performance.",
     doc_md=markdown_text,
-    tags=["ETL", "Heart Disease"],
+    tags=["ETL", "Student Performance"],
     default_args=default_args,
     catchup=False,
 )
-def process_etl_heart_data():
+def process_etl_student_performance():
 
     @task.virtualenv(
         task_id="obtain_original_data",
-        requirements=["ucimlrepo==0.0.3",
-                      "awswrangler==3.6.0"],
+        requirements=[
+            "awswrangler==3.6.0",
+            "gdown==5.1.0"],
         system_site_packages=True
     )
-    def get_data():
+    def get_data() -> str:
         """
-        Load the raw data from UCI repository
+        Load the raw data from google drive, returns the moment when it happend
         """
         import awswrangler as wr
-        from ucimlrepo import fetch_ucirepo
-        from airflow.models import Variable
-
-        # fetch dataset
-        heart_disease = fetch_ucirepo(id=45)
-
-        data_path = "s3://data/raw/heart.csv"
-        dataframe = heart_disease.data.original
-
-        target_col = Variable.get("target_col_heart")
-
-        # Replace level of heart decease to just distinguish presence 
-        # (values 1,2,3,4) from absence (value 0).
-        dataframe.loc[dataframe[target_col] > 0, target_col] = 1
-
-        wr.s3.to_csv(df=dataframe,
-                     path=data_path,
-                     index=False)
-
-
-    @task.virtualenv(
-        task_id="make_dummies_variables",
-        requirements=["awswrangler==3.6.0"],
-        system_site_packages=True
-    )
-    def make_dummies_variables():
-        """
-        Convert categorical variables into one-hot encoding.
-        """
-        import json
         import datetime
-        import boto3
-        import botocore.exceptions
-        import mlflow
+        import gdown
+        import os
+        import tempfile
 
-        import awswrangler as wr
-        import pandas as pd
-        import numpy as np
+        def drive_to_s3(date_str: str):
+            file_id = "1r1vNWVotPfX1tpA26jKE7CBpDzeUNGMr"            
+            s3_destination_path = f"s3://data/student_performance/{date_str}/raw.csv" 
 
-        from airflow.models import Variable
+            # Usar un dir temporal que se borra solo al terminar
+            with tempfile.TemporaryDirectory() as temp_dir:
+                local_file_path = os.path.join(temp_dir, "raw.csv")
+                print("Iniciando descarga desde Google Drive...")
+                gdown.download(
+                    id=file_id, 
+                    output=local_file_path, 
+                    quiet=False
+                )
+                print(f"Descarga completa. Subiendo archivo a {s3_destination_path}...")
+                wr.s3.upload(
+                    local_file=local_file_path, 
+                    path=s3_destination_path
+                )
+            print("Proceso completado. El archivo temporal fue eliminado del servidor.")
 
-        data_original_path = "s3://data/raw/heart.csv"
-        data_end_path = "s3://data/raw/heart_dummies.csv"
-        dataset = wr.s3.read_csv(data_original_path)
-
-        # Clean duplicates
-        dataset.drop_duplicates(inplace=True, ignore_index=True)
-        # Drop NaN
-        dataset.dropna(inplace=True, ignore_index=True)
-
-        # Force type in categorical columns
-        dataset["cp"] = dataset["cp"].astype(int)
-        dataset["restecg"] = dataset["restecg"].astype(int)
-        dataset["slope"] = dataset["slope"].astype(int)
-        dataset["ca"] = dataset["ca"].astype(int)
-        dataset["thal"] = dataset["thal"].astype(int)
-
-        categories_list = ["cp", "restecg", "slope", "ca", "thal"]
-        dataset_with_dummies = pd.get_dummies(data=dataset,
-                                              columns=categories_list,
-                                              drop_first=True)
-
-        wr.s3.to_csv(df=dataset_with_dummies,
-                     path=data_end_path,
-                     index=False)
-
-        # Save information of the dataset
-        client = boto3.client('s3')
-
-        data_dict = {}
-        try:
-            client.head_object(Bucket='data', Key='data_info/data.json')
-            result = client.get_object(Bucket='data', Key='data_info/data.json')
-            text = result["Body"].read().decode()
-            data_dict = json.loads(text)
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] != "404":
-                # Something else has gone wrong.
-                raise e
-
-        target_col = Variable.get("target_col_heart")
-        dataset_log = dataset.drop(columns=target_col)
-        dataset_with_dummies_log = dataset_with_dummies.drop(columns=target_col)
-
-        # Upload JSON String to an S3 Object
-        data_dict['columns'] = dataset_log.columns.to_list()
-        data_dict['columns_after_dummy'] = dataset_with_dummies_log.columns.to_list()
-        data_dict['target_col'] = target_col
-        data_dict['categorical_columns'] = categories_list
-        data_dict['columns_dtypes'] = {k: str(v) for k, v in dataset_log.dtypes.to_dict().items()}
-        data_dict['columns_dtypes_after_dummy'] = {k: str(v) for k, v in dataset_with_dummies_log.dtypes
-                                                                                                 .to_dict()
-                                                                                                 .items()}
-
-        category_dummies_dict = {}
-        for category in categories_list:
-            category_dummies_dict[category] = np.sort(dataset_log[category].unique()).tolist()
-
-        data_dict['categories_values_per_categorical'] = category_dummies_dict
-
-        data_dict['date'] = datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"')
-        data_string = json.dumps(data_dict, indent=2)
-
-        client.put_object(
-            Bucket='data',
-            Key='data_info/data.json',
-            Body=data_string
-        )
-
-        mlflow.set_tracking_uri('http://mlflow:5000')
-        experiment = mlflow.set_experiment("Heart Disease")
-
-        mlflow.start_run(run_name='ETL_run_' + datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"'),
-                         experiment_id=experiment.experiment_id,
-                         tags={"experiment": "etl", "dataset": "Heart disease"},
-                         log_system_metrics=True)
-
-        mlflow_dataset = mlflow.data.from_pandas(dataset,
-                                                 source="https://archive.ics.uci.edu/dataset/45/heart+disease",
-                                                 targets=target_col,
-                                                 name="heart_data_complete")
-        mlflow_dataset_dummies = mlflow.data.from_pandas(dataset_with_dummies,
-                                                         source="https://archive.ics.uci.edu/dataset/45/heart+disease",
-                                                         targets=target_col,
-                                                         name="heart_data_complete_with_dummies")
-        mlflow.log_input(mlflow_dataset, context="Dataset")
-        mlflow.log_input(mlflow_dataset_dummies, context="Dataset")
+        date_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        drive_to_s3(date_str)
+        return date_str
 
     @task.virtualenv(
-        task_id="split_dataset",
-        requirements=["awswrangler==3.6.0",
-                      "scikit-learn==1.3.2"],
+        task_id="check_original_data",
+        requirements=[
+            "awswrangler==3.6.0"],
         system_site_packages=True
     )
-    def split_dataset():
+    def check_data(date_str: str, expected_features: dict) -> None:
         """
-        Generate a dataset split into a training part and a test part
+        Check the raw data
         """
         import awswrangler as wr
+        from airflow.exceptions import AirflowFailException
+        import pandas as pd
+
+        # Read dataset
+        df = wr.s3.read_csv(f"s3://data/student_performance/{date_str}/raw.csv")
+
+        # Check features
+        expected_set = set(expected_features.keys())
+        actual_set = set(df.columns)
+        missing_features = expected_set - actual_set
+        added_features = actual_set - expected_set
+        is_exact_set_match = (missing_features == set() and added_features == set())
+
+        # Log results
+        if is_exact_set_match:
+            print(f"Feature names and quantities came as expected")
+        elif len(missing_features) > 0:
+            print(f"Missing features ({len(missing_features)}): {missing_features}")
+            raise AirflowFailException("CRITICAL: Missing features. Halting DAG execution.")
+        else:
+            print(f"Added/Extra features ({len(added_features)}): {added_features}")
+            raise AirflowFailException("CRITICAL: Added/Extra features. Halting DAG execution.")
+    
+        # Check dtypes
+        dtype_mapping = {
+            col: pd.CategoricalDtype(categories=spec['valid']) 
+                if spec['type'] == 'category' and 'valid' in spec 
+                else spec['type']
+            for col, spec in expected_features.items()
+        }
+        try:
+            df = df.astype(dtype_mapping)
+            print("Data types converted")
+        except Exception as e:
+            print(f"Cant convert datatypes: {e}")
+            raise AirflowFailException("CRITICAL: Cant convert datatypes. Halting DAG execution.")
+
+
+    @task.virtualenv(
+        task_id="check_missing",
+        requirements=[
+            "awswrangler==3.6.0"],
+        system_site_packages=True
+    )
+    def check_missing(date_str: str) -> None:
+        """
+        Check the missing values
+        """
+        import awswrangler as wr
+        from airflow.exceptions import AirflowFailException
+
+        # Read dataset
+        df = wr.s3.read_csv(f"s3://data/student_performance/{date_str}/raw.csv")
+
+        #Check
+        THRESHOLD = 0.2
+        feats_affected = []
+        miss = df.isnull().mean()
+        for col, value in miss.items():
+            if value > 0 and value < THRESHOLD:
+                print(f"Some missing values in {col}: {value}")
+            elif value >= THRESHOLD:
+                print(f"Critical missing values in {col}: {value}")
+                feats_affected.append(col)
+        if feats_affected:
+            raise AirflowFailException("CRITICAL: Too much missing values. Halting DAG execution.")
+
+
+    @task.virtualenv(
+        task_id="transform_data",
+        requirements=[
+            "awswrangler==3.6.0",
+            "scikit-learn==1.3.2",
+            "cloudpickle==3.0.0"],
+        system_site_packages=True
+    )
+    def transform_data(date_str: str, expected_features: dict) -> None:
+        """
+        Trasnforms raw data with Column Transformer using expected_features as reference.
+        Handles splitting, missing values, outliers, encoding, scaling and droping
+        The result is saved in a bucket in:
+            X_train.csv,
+            X_test.csv,
+            y_train.csv,
+            y_test.csv,
+            etl_preprocessor.pkl
+        """
         from sklearn.model_selection import train_test_split
-        from airflow.models import Variable
-
-        def save_to_csv(df, path):
-            wr.s3.to_csv(df=df,
-                         path=path,
-                         index=False)
-
-        data_original_path = "s3://data/raw/heart_dummies.csv"
-        dataset = wr.s3.read_csv(data_original_path)
-
-        test_size = Variable.get("test_size_heart")
-        target_col = Variable.get("target_col_heart")
-
-        X = dataset.drop(columns=target_col)
-        y = dataset[[target_col]]
-
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, stratify=y)
-
-        # Clean duplicates
-        dataset.drop_duplicates(inplace=True, ignore_index=True)
-
-        save_to_csv(X_train, "s3://data/final/train/heart_X_train.csv")
-        save_to_csv(X_test, "s3://data/final/test/heart_X_test.csv")
-        save_to_csv(y_train, "s3://data/final/train/heart_y_train.csv")
-        save_to_csv(y_test, "s3://data/final/test/heart_y_test.csv")
-
-    @task.virtualenv(
-        task_id="normalize_numerical_features",
-        requirements=["awswrangler==3.6.0",
-                      "scikit-learn==1.3.2",
-                      "mlflow==2.10.2"],
-        system_site_packages=True
-    )
-    def normalize_data():
-        """
-        Standardization of numerical columns
-        """
-        import json
-        import mlflow
-        import boto3
-        import botocore.exceptions
-
+        from sklearn.base import BaseEstimator, TransformerMixin
+        from sklearn.impute import SimpleImputer
+        from sklearn.preprocessing import StandardScaler, OneHotEncoder
+        from sklearn.compose import ColumnTransformer
+        from sklearn.pipeline import Pipeline
+        import cloudpickle
+        from airflow.exceptions import AirflowFailException
         import awswrangler as wr
-        import pandas as pd
+        import os
+        import tempfile
 
-        from sklearn.preprocessing import StandardScaler
+        TEST_SIZE = 0.2
+        RANDOM_STATE = 42
+        IQR_MULTIPLIER = 1.5
+        
+        # Transformers
+        class IQROutlierHandler(BaseEstimator, TransformerMixin):
+            """Detects and clips outliers using IQR."""
+            def __init__(self, multiplier=1.5):
+                self.multiplier = multiplier
+                self.lower_bounds_ = {}
+                self.upper_bounds_ = {}
 
-        def save_to_csv(df, path):
-            wr.s3.to_csv(df=df,
-                         path=path,
-                         index=False)
+            def fit(self, X, y=None):
+                # Learns the limits with the training data
+                for col in X.columns:
+                    q1 = X[col].quantile(0.25)
+                    q3 = X[col].quantile(0.75)
+                    iqr = q3 - q1
+                    self.lower_bounds_[col] = q1 - (self.multiplier * iqr)
+                    self.upper_bounds_[col] = q3 + (self.multiplier * iqr)
+                return self
 
-        X_train = wr.s3.read_csv("s3://data/final/train/heart_X_train.csv")
-        X_test = wr.s3.read_csv("s3://data/final/test/heart_X_test.csv")
+            def transform(self, X):
+                X_trans = X.copy()
+                for col in X.columns:
+                    X_trans[col] = X_trans[col].clip(lower=self.lower_bounds_[col], upper=self.upper_bounds_[col])
+                return X_trans
+            
+            def get_feature_names_out(self, input_features=None):
+                return input_features
 
-        sc_X = StandardScaler(with_mean=True, with_std=True)
-        X_train_arr = sc_X.fit_transform(X_train)
-        X_test_arr = sc_X.transform(X_test)
+        class FrequencyEncoder(BaseEstimator, TransformerMixin):
+            """Encodes categories based on their frequency of appearance."""
+            def __init__(self):
+                self.mapping_ = {}
 
-        X_train = pd.DataFrame(X_train_arr, columns=X_train.columns)
-        X_test = pd.DataFrame(X_test_arr, columns=X_test.columns)
+            def fit(self, X, y=None):
+                for col in X.columns:
+                    # Dict with relative freqs
+                    self.mapping_[col] = X[col].value_counts(normalize=True).to_dict()
+                return self
 
-        save_to_csv(X_train, "s3://data/final/train/heart_X_train.csv")
-        save_to_csv(X_test, "s3://data/final/test/heart_X_test.csv")
+            def transform(self, X):
+                X_trans = X.copy()
+                for col in X.columns:
+                    # Maps using 0 if unseen
+                    X_trans[col] = X_trans[col].map(self.mapping_[col]).fillna(0)
+                return X_trans
+            
+            def get_feature_names_out(self, input_features=None):
+                return input_features
 
-        # Save information of the dataset
-        client = boto3.client('s3')
+        # Load data
+        df = wr.s3.read_csv(f"s3://data/student_performance/{date_str}/raw.csv")
 
-        try:
-            client.head_object(Bucket='data', Key='data_info/data.json')
-            result = client.get_object(Bucket='data', Key='data_info/data.json')
-            text = result["Body"].read().decode()
-            data_dict = json.loads(text)
-        except botocore.exceptions.ClientError as e:
-                # Something else has gone wrong.
-                raise e
+        # Define variables for pipeline
+        target_col = "final_grade"
+        num_cols = [k for k,v in expected_features.items() if v['transform'] == 'num']
+        cat_ohe_cols = [k for k,v in expected_features.items() if v['transform'] == 'ohe']
+        cat_freq_cols = [k for k,v in expected_features.items() if v['transform'] == 'freq']
+        cols_to_drop = [k for k,v in expected_features.items() if v['transform'] == 'drop']
 
-        # Upload JSON String to an S3 Object
-        data_dict['standard_scaler_mean'] = sc_X.mean_.tolist()
-        data_dict['standard_scaler_std'] = sc_X.scale_.tolist()
-        data_string = json.dumps(data_dict, indent=2)
+        # Check if any was left behind
+        total_feats = len(num_cols) + len(cat_freq_cols) + len(cat_ohe_cols) + len(cols_to_drop)
+        if total_feats != len(df.keys())-1:
+            raise AirflowFailException("CRITICAL: Some features are not being processed. Halting DAG execution.")
+        else:
+            print("All features to be processed")
 
-        client.put_object(
-            Bucket='data',
-            Key='data_info/data.json',
-            Body=data_string
+        #Beggin Processing
+
+        # Split
+        X = df.drop(columns=[target_col])
+        y = df[target_col]
+        X_train, X_test, y_train, y_test = train_test_split(
+            X,
+            y,
+            test_size=TEST_SIZE,
+            random_state=RANDOM_STATE,
+            stratify=y
         )
 
+        #Join categoricals for intialization
+        cat_cols = cat_ohe_cols + cat_freq_cols
+
+        #Send each categorical to its encoder
+        categorical_encoders = ColumnTransformer(
+            transformers=[
+                ('ohe', OneHotEncoder(sparse_output=False,handle_unknown='ignore'), cat_ohe_cols),
+                ('freq', FrequencyEncoder(), cat_freq_cols)
+            ],
+            remainder='drop',
+            n_jobs=1
+        )
+
+        #Pipeline for categoricals
+        cat_pipeline = Pipeline([
+            ('imputer', SimpleImputer(strategy='most_frequent')),
+            ('encoders', categorical_encoders)
+        ])
+
+        #Pipeline for numerics
+        num_pipeline = Pipeline([
+            ('imputer', SimpleImputer(strategy='median')),
+            ('outliers', IQROutlierHandler(multiplier=IQR_MULTIPLIER)),
+            ('scaler', StandardScaler())
+        ])
+
+        #Preprocesador master
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', num_pipeline, num_cols),
+                ('cat', cat_pipeline, cat_cols),
+                ('dropper', 'drop', cols_to_drop),
+            ],
+            remainder='drop',
+            n_jobs=1
+        )
+
+        preprocessor.set_output(transform="pandas")
+
+        #Fit in train and transform both
+        X_train_processed = preprocessor.fit_transform(X_train)            
+        X_test_processed = preprocessor.transform(X_test)
+
+        # Save .pkl of the processor
+        with tempfile.TemporaryDirectory() as temp_dir:
+            local_export_path = os.path.join(temp_dir, "etl_preprocessor.pkl")
+            with open(local_export_path, "wb") as f:
+                cloudpickle.dump(preprocessor, f)
+            s3_destination = f"s3://data/student_performance/{date_str}/etl_preprocessor.pkl"
+            wr.s3.upload(
+                local_file=local_export_path,
+                path=s3_destination
+            )
+
+        def save_to_csv(df, path):
+            wr.s3.to_csv(df=df,
+                         path=path,
+                         index=False)
+
+        save_to_csv(X_train_processed, f"s3://data/student_performance/{date_str}/X_train.csv")
+        save_to_csv(X_test_processed, f"s3://data/student_performance/{date_str}/X_test.csv")
+        save_to_csv(y_train, f"s3://data/student_performance/{date_str}/y_train.csv")
+        save_to_csv(y_test, f"s3://data/student_performance/{date_str}/y_test.csv")
+
+    @task.virtualenv(
+    task_id="log_to_mlFlow",
+    requirements=[
+        "awswrangler==3.6.0",
+        "mlflow==2.10.1"],
+    system_site_packages=True
+    )
+    def log_to_mlFlow(date_str: str, expected_features: dict) -> None:
+        """
+        Logs a run on MLflow to keep track of the ETL execution:
+        dataset, schema, preprocessor artifact, and descriptive metrics.
+        """
+        import mlflow
+        import awswrangler as wr
+        import pandas as pd
+        import json
+        import tempfile
+        import os
+
+        data_path = f"s3://data/student_performance/{date_str}/raw.csv"
+        df = wr.s3.read_csv(data_path)
+
         mlflow.set_tracking_uri('http://mlflow:5000')
-        experiment = mlflow.set_experiment("Heart Disease")
+        experiment = mlflow.set_experiment("Student Performance")
 
-        # Obtain the last experiment run_id to log the new information
-        list_run = mlflow.search_runs([experiment.experiment_id], output_format="list")
+        with mlflow.start_run(
+            run_name='ETL_run_' + date_str,
+            experiment_id=experiment.experiment_id,
+            tags={"experiment": "etl", "dataset": "Student Performance"},
+            log_system_metrics=True
+        ):
+            #Log Dataset
+            mlflow_dataset = mlflow.data.from_pandas(
+                df,
+                source=data_path,
+                targets="final_grade",
+                name="student_performance_data_complete"
+            )
+            mlflow.log_input(
+                mlflow_dataset,
+                context="Dataset",
+                tags={"provenance": "https://www.kaggle.com/datasets/harshadapatil31/student-performance-and-study-habits-dataset/data"}
+            )
 
-        with mlflow.start_run(run_id=list_run[0].info.run_id):
+            #Log Expected Schema
+            with tempfile.TemporaryDirectory() as temp_dir:
+                schema_path = os.path.join(temp_dir, "expected_features.json")
+                with open(schema_path, "w") as f:
+                    json.dump(expected_features, f, indent=2)
+                mlflow.log_artifact(schema_path, artifact_path="schema")
 
-            mlflow.log_param("Train observations", X_train.shape[0])
-            mlflow.log_param("Test observations", X_test.shape[0])
-            mlflow.log_param("Standard Scaler feature names", sc_X.feature_names_in_)
-            mlflow.log_param("Standard Scaler mean values", sc_X.mean_)
-            mlflow.log_param("Standard Scaler scale values", sc_X.scale_)
+            #Log Preprocessor
+            preprocessor_s3_path = f"s3://data/student_performance/{date_str}/etl_preprocessor.pkl"
+            with tempfile.TemporaryDirectory() as temp_dir:
+                local_preprocessor_path = os.path.join(temp_dir, "etl_preprocessor.pkl")
+                wr.s3.download(path=preprocessor_s3_path, local_file=local_preprocessor_path)
+                mlflow.log_artifact(local_preprocessor_path, artifact_path="preprocessor")
 
+            mlflow.log_param("preprocessor_s3_path", preprocessor_s3_path)
+            mlflow.log_param("sklearn_version", "1.3.2")
+            mlflow.log_param("cloudpickle_version", "3.0.0")
 
-    get_data() >> make_dummies_variables() >> split_dataset() >> normalize_data()
+    
+    date_str = get_data()
+    validate_step = check_data(date_str, expected_features)
+    missing_step = check_missing(date_str)
+    transform_step = transform_data(date_str, expected_features)
+    mlflow_step = log_to_mlFlow(date_str, expected_features)
 
+    validate_step >> missing_step >> transform_step >> mlflow_step
 
-dag = process_etl_heart_data()
+dag = process_etl_student_performance()

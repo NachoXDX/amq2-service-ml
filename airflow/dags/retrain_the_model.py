@@ -56,15 +56,17 @@ def processing_dag():
             client = mlflow.MlflowClient()
             model_data = client.get_model_version_by_alias(model_name, alias)
 
-            champion_version = mlflow.sklearn.load_model(model_data.source)
+            champion_version = mlflow.sklearn.load_model(f"models:/{model_name}@{alias}")
+
 
             return champion_version
 
         def load_the_train_test_data():
-            X_train = wr.s3.read_csv("s3://data/final/train/heart_X_train.csv")
-            y_train = wr.s3.read_csv("s3://data/final/train/heart_y_train.csv")
-            X_test = wr.s3.read_csv("s3://data/final/test/heart_X_test.csv")
-            y_test = wr.s3.read_csv("s3://data/final/test/heart_y_test.csv")
+
+            X_train = wr.s3.read_csv("s3://data/heart_disease/2026-07-25_21-36-53/final/train/heart_X_train.csv")
+            y_train = wr.s3.read_csv("s3://data/heart_disease/2026-07-25_21-36-53/final/train/heart_y_train.csv")
+            X_test = wr.s3.read_csv("s3://data/heart_disease/2026-07-25_21-36-53/final/test/heart_X_test.csv")
+            y_test = wr.s3.read_csv("s3://data/heart_disease/2026-07-25_21-36-53/final/test/heart_y_test.csv")
 
             return X_train, y_train, X_test, y_test
 
@@ -162,16 +164,12 @@ def processing_dag():
         def load_the_model(alias):
             model_name = "heart_disease_model_prod"
 
-            client = mlflow.MlflowClient()
-            model_data = client.get_model_version_by_alias(model_name, alias)
-
-            model = mlflow.sklearn.load_model(model_data.source)
-
-            return model
+            return mlflow.sklearn.load_model(f"models:/{model_name}@{alias}")
 
         def load_the_test_data():
-            X_test = wr.s3.read_csv("s3://data/final/test/heart_X_test.csv")
-            y_test = wr.s3.read_csv("s3://data/final/test/heart_y_test.csv")
+            X_test = wr.s3.read_csv("s3://data/heart_disease/2026-07-25_21-36-53/final/test/heart_X_test.csv")
+            y_test = wr.s3.read_csv("s3://data/heart_disease/2026-07-25_21-36-53/final/test/heart_y_test.csv")
+
 
             return X_test, y_test
 

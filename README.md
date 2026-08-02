@@ -7,7 +7,7 @@
 - Bettig Santiago
 - Dieguez Manuel
 
-En este repositorio se pretende implementar un servicio de ML para predecir el rendimiento de los estudiantes, utilizando un [dataset de Kaggle](https://www.kaggle.com/datasets/harshadapatil31/student-performance-and-study-habits-dataset/data).
+En este repositorio se pretende implementar un servicio de ML para predecir el rendimiento de los estudiantes, utilizando un [dataset de Kaggle](https://www.kaggle.com/datasets/harshadapatil31/student-performance-and-study-habits-dataset/data). El dataset fue subido a [Google Drive](https://drive.google.com/file/d/1r1vNWVotPfX1tpA26jKE7CBpDzeUNGMr/view?usp=sharing) para que sea mas facil su acceso, no es necesario descargarlo directamente ya que sera obtenido por el DAG de ETL.
 
 ![alt text](diagrama.png)
 
@@ -45,7 +45,7 @@ La implementación incluye:
 El orden para probar el funcionamiento completo es el siguiente:
 
 1. Levantar todo con docker compose.
-2. Ejecutar el DAG de ETL en Airflow llamado `process_etl_student_performance`.
+2. Ejecutar el DAG de ETL en Airflow llamado `process_etl_student_performance`. Esto descargara el dataset y almacenara en el bucket la version cruda y la version procesada con su division en Train y Test asi como su procesador de Sklearn.
 3. Ejecuta la notebook ubicada en `notebooks/student_performance.ipynb` para realizar la búsqueda de hiperparámetros y entrenar el mejor modelo.
 4. Ingresar al frontend ubicado en el puerto 8081.
 5. Hacer una prediccion completando los campos que solicita el frontend.

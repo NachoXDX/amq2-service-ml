@@ -67,3 +67,49 @@ El orden para probar el funcionamiento completo es el siguiente:
 | DAG Batch Prediction | 🔴 No implementado |
 | API | 🔴 No implementado |
 | Frontend | 🔴 No implementado |
+
+## DAG ETL
+
+### Descripcion
+
+El DAG `etl_process.py` realiza las siguientes operaciones:
+
+![alt text](etlDag.png)
+
+### Almacenamiento en Bucket
+
+Toda la informacion se almacena en una carpeta dentro del bucket `data` con la siguiente estructura:
+
+```text
+data/
+└── student_performance/
+    └── YYYY-MM-DD_HH-MM-SS/
+        ├── raw.csv
+        ├── X_train.csv
+        ├── X_test.csv
+        ├── y_train.csv
+        ├── y_test.csv
+        └── etl_preprocessor.pkl
+```
+
+Donde:
+
+- `raw.csv`: es el archivo crudo descargado de google drive.
+- `X_train.csv, y_train.csv`: son archivos preprocesados para entrenar el modelo.
+- `X_test.csv, y_test.csv`: son archivos preprocesados para evaluar el modelo.
+- `etl_preprocessor.pkl`: es el procesador utilizado, serializado con cloudpickle.
+
+### Recomendaciones para su uso
+
+Para no tener problemas al usar el preprocesador en otros servicios, se debe utilizar las siguientes versiones:
+
+- `python 3.12`
+- `cloudpickle 3.1.2`
+- `sklearn 1.9.0`
+
+### Registro en MLFlow
+
+Cuando el DAG se ejecuta, se registra en mlflow y se le asocian los artefactos:
+
+- `etl_preprocessor.pkl` (procesador serializado con cloudpickle)
+- `expected_features.json` (diccionario con la definicion de procesamiento, tipo de datos y valores validos de cada feature del dataset original)

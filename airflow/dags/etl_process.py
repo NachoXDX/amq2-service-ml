@@ -71,7 +71,7 @@ expected_features = {
     },
     'final_exam_score':{
         'type':'float64',
-        'transform': 'num', 
+        'transform': 'drop', 
     },
     'final_grade':{
         'type':'category',
@@ -93,6 +93,7 @@ def process_etl_student_performance():
 
     @task.virtualenv(
         task_id="obtain_original_data",
+        python_version="3.12",
         requirements=[
             "awswrangler==3.6.0",
             "gdown==5.1.0"],
@@ -134,6 +135,7 @@ def process_etl_student_performance():
 
     @task.virtualenv(
         task_id="check_original_data",
+        python_version="3.12",
         requirements=[
             "awswrangler==3.6.0"],
         system_site_packages=True
@@ -183,6 +185,7 @@ def process_etl_student_performance():
 
     @task.virtualenv(
         task_id="check_missing",
+        python_version='3.12',
         requirements=[
             "awswrangler==3.6.0"],
         system_site_packages=True
@@ -213,10 +216,11 @@ def process_etl_student_performance():
 
     @task.virtualenv(
         task_id="transform_data",
+        python_version='3.12',
         requirements=[
             "awswrangler==3.6.0",
-            "scikit-learn==1.3.2",
-            "cloudpickle==3.0.0"],
+            "scikit-learn==1.9.0",
+            "cloudpickle==3.1.2"],
         system_site_packages=True
     )
     def transform_data(date_str: str, expected_features: dict) -> None:
@@ -390,6 +394,7 @@ def process_etl_student_performance():
 
     @task.virtualenv(
     task_id="log_to_mlFlow",
+    python_version='3.12',
     requirements=[
         "awswrangler==3.6.0",
         "mlflow==2.10.1"],
@@ -447,8 +452,9 @@ def process_etl_student_performance():
                 mlflow.log_artifact(local_preprocessor_path, artifact_path="preprocessor")
 
             mlflow.log_param("preprocessor_s3_path", preprocessor_s3_path)
-            mlflow.log_param("sklearn_version", "1.3.2")
-            mlflow.log_param("cloudpickle_version", "3.0.0")
+            mlflow.log_param("sklearn_version", "1.9.0")
+            mlflow.log_param("cloudpickle_version", "3.1.2")
+            mlflow.log_param("python_version", "3.12")
 
     
     date_str = get_data()

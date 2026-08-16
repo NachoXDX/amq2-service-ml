@@ -62,8 +62,8 @@ def train_student_performance():
     @task.virtualenv(
         requirements=[
             "awswrangler==3.6.0",
-            "scikit-learn==1.3.2",
-            "mlflow==2.10.2",
+            "scikit-learn==1.9.0",
+            "mlflow==2.10.1",
             "optuna>=4.0.0",
             "numpy<2",
         ],

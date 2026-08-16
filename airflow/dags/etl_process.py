@@ -93,7 +93,7 @@ def process_etl_student_performance():
 
     @task.virtualenv(
         task_id="obtain_original_data",
-        python_version='3.12',
+        python_version="3.12",
         requirements=[
             "awswrangler==3.6.0",
             "gdown==5.1.0"],
@@ -135,7 +135,7 @@ def process_etl_student_performance():
 
     @task.virtualenv(
         task_id="check_original_data",
-        python_version='3.12',
+        python_version="3.12",
         requirements=[
             "awswrangler==3.6.0"],
         system_site_packages=True

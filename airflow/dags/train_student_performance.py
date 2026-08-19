@@ -2,6 +2,17 @@ import datetime
 
 from airflow.decorators import dag, task
 
+markdown_text = """
+### Train Student Performance
+
+Trains a Logistic Regression model on the latest ETL output (S3),
+searches hyperparameters with Optuna, and registers the model in
+MLflow. Promotes it to `champion` alias if it beats the current one
+by weighted F1.
+
+Triggered automatically by `process_etl_student_performance` when the
+dataset changes, or manually.
+"""
 
 default_args = {
     "owner": "Lourdes Tolotto",
@@ -14,6 +25,7 @@ default_args = {
 @dag(
     dag_id="train_student_performance",
     description="Train and register the Student Performance model.",
+    doc_md=markdown_text,
     default_args=default_args,
     schedule=None,
     catchup=False,
@@ -176,20 +188,55 @@ def train_student_performance():
             mlflow.log_params(study.best_params)
             mlflow.log_metrics(metrics)
 
+            # Link al preprocesador de este dataset (trazabilidad)
+            preprocessor_path = f"{base_path}/etl_preprocessor.pkl"
+            mlflow.log_param("preprocessor_s3_path", preprocessor_path)
+
             # Register the trained model in the MLflow Model Registry
             signature = infer_signature(
                 X_train,
                 model.predict(X_train),
             )
 
+            # Registrar el modelo (crea una version nueva)
+            signature = infer_signature(
+                X_train,
+                model.predict(X_train),
+            )
+
+            model_name = "student_performance_model"
+
             mlflow.sklearn.log_model(
                 sk_model=model,
                 artifact_path="model",
-                registered_model_name="student_performance_model",
+                registered_model_name=model_name,
                 signature=signature,
             )
 
-            print("Model trained and registered successfully.")
+            # Buscar la version recien creada, filtrando por el run actual
+            current_run_id = mlflow.active_run().info.run_id
+            client_versions = mlflow.MlflowClient().search_model_versions(
+                f"run_id='{current_run_id}'"
+            )
+            new_version = client_versions[0].version
+            new_f1 = metrics["f1_weighted"]
+
+            # Comparar contra el champion actual, si existe
+            client = mlflow.MlflowClient()
+
+            try:
+                champion = client.get_model_version_by_alias(model_name, "champion")
+                champion_run = client.get_run(champion.run_id)
+                champion_f1 = champion_run.data.metrics.get("f1_weighted", 0)
+            except Exception:
+                # No hay champion todavia: este modelo lo es por default
+                champion_f1 = None
+
+            if champion_f1 is None or new_f1 > champion_f1:
+                client.set_registered_model_alias(model_name, "champion", new_version)
+                print(f"New champion: v{new_version} (f1={new_f1:.4f})")
+            else:
+                print(f"Challenger v{new_version} (f1={new_f1:.4f}) did not beat champion (f1={champion_f1:.4f})")
 
     # DAG dependency: first find the latest dataset, then train the model
     latest_dataset = get_latest_dataset()

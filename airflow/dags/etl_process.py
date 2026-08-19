@@ -134,6 +134,59 @@ def process_etl_student_performance():
         return date_str
 
     @task.virtualenv(
+        task_id="check_dataset_changed",
+        python_version="3.12",
+        requirements=[
+            "awswrangler==3.6.0",
+            "mlflow==2.10.1"],
+        system_site_packages=True
+    )
+    def check_dataset_changed(date_str: str) -> dict:
+        """
+        Compares the hash of the new raw data against the last one logged
+        in MLflow. Returns a dict with whether it changed and the new hash.
+        """
+        import awswrangler as wr
+        import hashlib
+        import mlflow
+
+        raw_path = f"s3://data/student_performance/{date_str}/raw.csv"
+        df = wr.s3.read_csv(raw_path)
+        new_hash = hashlib.sha256(
+            df.to_csv(index=False).encode("utf-8")
+        ).hexdigest()
+
+        mlflow.set_tracking_uri("http://mlflow:5000")
+        experiment = mlflow.get_experiment_by_name("Student Performance")
+
+        if experiment is None:
+            print("No previous ETL runs found. Proceeding.")
+            return {"changed": True, "hash": new_hash}
+
+        runs = mlflow.search_runs(
+            experiment_ids=[experiment.experiment_id],
+            order_by=["start_time DESC"],
+            max_results=1
+        )
+
+        if runs.empty:
+            print("No previous ETL runs found. Proceeding.")
+            return {"changed": True, "hash": new_hash}
+
+        last_hash = runs.iloc[0].get("params.dataset_hash")
+        changed = (last_hash != new_hash)
+
+        print(f"Dataset changed: {changed}")
+        return {"changed": changed, "hash": new_hash}
+
+    @task.short_circuit(task_id="stop_if_unchanged")
+    def stop_if_unchanged(check_result: dict) -> bool:
+        """
+        Returns False to stop the DAG here if the dataset didn't change.
+        """
+        return check_result["changed"]
+    
+    @task.virtualenv(
         task_id="check_original_data",
         python_version="3.12",
         requirements=[
@@ -400,7 +453,7 @@ def process_etl_student_performance():
         "mlflow==2.10.1"],
     system_site_packages=True
     )
-    def log_to_mlFlow(date_str: str, expected_features: dict) -> None:
+    def log_to_mlFlow(date_str: str, expected_features: dict, dataset_hash: str) -> None:
         """
         Logs a run on MLflow to keep track of the ETL execution:
         dataset, schema, preprocessor artifact, and descriptive metrics.
@@ -451,18 +504,29 @@ def process_etl_student_performance():
                 wr.s3.download(path=preprocessor_s3_path, local_file=local_preprocessor_path)
                 mlflow.log_artifact(local_preprocessor_path, artifact_path="preprocessor")
 
+            #Log Params
+            mlflow.log_param("dataset_hash", dataset_hash)
             mlflow.log_param("preprocessor_s3_path", preprocessor_s3_path)
             mlflow.log_param("sklearn_version", "1.9.0")
             mlflow.log_param("cloudpickle_version", "3.1.2")
             mlflow.log_param("python_version", "3.12")
 
+    from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+
+    trigger_training = TriggerDagRunOperator(
+        task_id="trigger_training_dag",
+        trigger_dag_id="train_student_performance",
+        wait_for_completion=False,
+    )
     
     date_str = get_data()
+    check_result = check_dataset_changed(date_str)
+    gate = stop_if_unchanged(check_result)
     validate_step = check_data(date_str, expected_features)
     missing_step = check_missing(date_str)
     transform_step = transform_data(date_str, expected_features)
-    mlflow_step = log_to_mlFlow(date_str, expected_features)
+    mlflow_step = log_to_mlFlow(date_str, expected_features, check_result["hash"])
 
-    validate_step >> missing_step >> transform_step >> mlflow_step
+    gate >> validate_step >> missing_step >> transform_step >> mlflow_step >> trigger_training
 
 dag = process_etl_student_performance()

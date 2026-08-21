@@ -1,0 +1,11 @@
+{
+  "gender": "Male",
+  "study_time_hours": 4.0,
+  "attendance_percent": 98.0,
+  "sleep_hours": 6.5,
+  "parental_education": "Bachelors",
+  "internet_access": "Yes",
+  "extracurricular_activities": "Yes",
+  "part_time_job": "No",
+  "previous_grade": 76.9
+}

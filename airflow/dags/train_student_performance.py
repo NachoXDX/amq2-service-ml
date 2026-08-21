@@ -15,7 +15,7 @@ dataset changes, or manually.
 """
 
 default_args = {
-    "owner": "Lourdes Tolotto",
+    "owner": "Grupo 10",
     "depends_on_past": False,
     "retries": 1,
     "retry_delay": datetime.timedelta(minutes=5),

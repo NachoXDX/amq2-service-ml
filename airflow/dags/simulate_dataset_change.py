@@ -14,7 +14,7 @@ change-detection logic.
 """
 
 default_args = {
-    "owner": "Grupo 4",
+    "owner": "Grupo 10",
     "depends_on_past": False,
     "retries": 0,
 }

@@ -1,68 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ML Service Frontend</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #1e1e2e;
-            color: #cdd6f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .card {
-            background-color: #313244;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            max-width: 400px;
-        }
-
-        button {
-            background-color: #89b4fa;
-            color: #11111b;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 1rem;
-        }
-
-        button:hover {
-            background-color: #b4befe;
-        }
-    </style>
+    <title>Predicción de Rendimiento Estudiantil</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-    <div class="card">
-        <h1>ML Model Web Service</h1>
-        <p>Served via Nginx & Reverse Proxied to FastAPI.</p>
-        <button onclick="checkHealth()">Check API Health</button>
-        <pre id="response"
-            style="margin-top: 1rem; text-align: left; background: #181825; padding: 10px; border-radius: 6px;"></pre>
-    </div>
+    <main>
+        <h1>Predicción de Rendimiento Estudiantil</h1>
+        <p id="model-info">Cargando información del modelo...</p>
 
-    <script>
-        async function checkHealth() {
-            try {
-                const res = await fetch('/api/health');
-                const data = await res.json();
-                document.getElementById('response').innerText = JSON.stringify(data, null, 2);
-            } catch (err) {
-                document.getElementById('response').innerText = 'Error connecting to API: ' + err;
-            }
-        }
-    </script>
+        <form id="predict-form">
+            <label>
+                Género
+                <select name="gender" required>
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                </select>
+            </label>
+
+            <label>
+                Horas de estudio (por semana)
+                <input type="number" name="study_time_hours" step="0.1" min="0" required>
+            </label>
+
+            <label>
+                Asistencia (%)
+                <input type="number" name="attendance_percent" step="0.1" min="0" max="100" required>
+            </label>
+
+            <label>
+                Horas de sueño (promedio diario)
+                <input type="number" name="sleep_hours" step="0.1" min="0" required>
+            </label>
+
+            <label>
+                Educación de los padres
+                <select name="parental_education" required>
+                    <option value="High School">High School</option>
+                    <option value="Bachelors">Bachelors</option>
+                    <option value="Masters">Masters</option>
+                    <option value="PhD">PhD</option>
+                </select>
+            </label>
+
+            <label>
+                Acceso a internet
+                <select name="internet_access" required>
+                    <option value="Yes">Sí</option>
+                    <option value="No">No</option>
+                </select>
+            </label>
+
+            <label>
+                Actividades extracurriculares
+                <select name="extracurricular_activities" required>
+                    <option value="Yes">Sí</option>
+                    <option value="No">No</option>
+                </select>
+            </label>
+
+            <label>
+                Trabajo part-time
+                <select name="part_time_job" required>
+                    <option value="Yes">Sí</option>
+                    <option value="No">No</option>
+                </select>
+            </label>
+
+            <label>
+                Nota anterior
+                <input type="number" name="previous_grade" step="0.1" min="0" required>
+            </label>
+
+            <button type="submit">Predecir</button>
+        </form>
+
+        <div id="result"></div>
+    </main>
+
+    <script src="app.js"></script>
 </body>
-
 </html>

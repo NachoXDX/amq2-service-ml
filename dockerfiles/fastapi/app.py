@@ -1,7 +1,13 @@
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 
-from src.schemas import StudentFeatures, PredictionResponse, ModelInfoResponse
+from src.schemas import (
+    StudentFeatures,
+    PredictionResponse,
+    ModelInfoResponse,
+    BatchPredictionRequest,
+    BatchPredictionResponse,
+)
 from src.model_loader import model_wrapper, MODEL_NAME, MODEL_ALIAS
 
 app = FastAPI(title="Student Performance API")
@@ -34,6 +40,20 @@ def predict(features: StudentFeatures):
         prediction = model_wrapper.predict(df)
         return PredictionResponse(
             final_grade=str(prediction[0]),
+            model_version=model_wrapper.version,
+        )
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/predict/batch", response_model=BatchPredictionResponse)
+def predict_batch(batch: BatchPredictionRequest):
+    try:
+        df = pd.DataFrame([s.model_dump() for s in batch.students])
+        predictions = model_wrapper.predict(df)
+        return BatchPredictionResponse(
+            predictions=[str(p) for p in predictions],
             model_version=model_wrapper.version,
         )
     except RuntimeError as e:

@@ -21,3 +21,10 @@ class ModelInfoResponse(BaseModel):
     version: str
     alias: str
     run_id: str
+
+class BatchPredictionRequest(BaseModel):
+    students: list[StudentFeatures] = Field(..., min_length=1, max_length=500)
+
+class BatchPredictionResponse(BaseModel):
+    predictions: list[str]
+    model_version: str

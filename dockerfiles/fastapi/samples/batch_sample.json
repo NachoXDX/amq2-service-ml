@@ -1,0 +1,37 @@
+{
+  "students": [
+    {
+      "gender": "Male",
+      "study_time_hours": 4.0,
+      "attendance_percent": 98.0,
+      "sleep_hours": 6.5,
+      "parental_education": "Bachelors",
+      "internet_access": "Yes",
+      "extracurricular_activities": "Yes",
+      "part_time_job": "No",
+      "previous_grade": 76.9
+    },
+    {
+      "gender": "Female",
+      "study_time_hours": 6.3,
+      "attendance_percent": 100.0,
+      "sleep_hours": 5.7,
+      "parental_education": "High School",
+      "internet_access": "Yes",
+      "extracurricular_activities": "Yes",
+      "part_time_job": "Yes",
+      "previous_grade": 75.5
+    },
+    {
+      "gender": "Male",
+      "study_time_hours": 2.2,
+      "attendance_percent": 89.6,
+      "sleep_hours": 4.6,
+      "parental_education": "Bachelors",
+      "internet_access": "Yes",
+      "extracurricular_activities": "No",
+      "part_time_job": "Yes",
+      "previous_grade": 61.8
+    }
+  ]
+}

@@ -18,7 +18,6 @@ La implementación incluye:
 
 - Apache Airflow
   - Un DAG que obtiene los datos desde google drive, lo verifica, realiza limpieza, escalamiento y encoding y guarda en el bucket los datos separados para entrenamiento y pruebas asi como su procesador de Sklearn. MLflow hace seguimiento de este procesamiento.
-  ![alt text](etlDag.png)
   - Un DAG (`train_student_performance.py`) que, dado un nuevo conjunto de datos, reentrena el modelo (Regresión Logística con búsqueda de hiperparámetros vía Optuna). Compara el nuevo modelo contra el champion actual usando `f1_weighted`, y si lo supera, lo reemplaza. Todo se registra en MLflow, incluyendo el path al preprocesador (`preprocessor_s3_path`) que usó ese entrenamiento.
 
 - Jupiter Notebooks
@@ -44,8 +43,8 @@ La implementación incluye:
 El orden para probar el funcionamiento completo es el siguiente:
 
 1. Levantar todo con `docker compose --profile all up -d --build`.
-2. Ejecutar el DAG de ETL en Airflow llamado `process_etl_student_performance`. Esto descargara el dataset y almacenara en el bucket la version cruda y la version procesada con su division en Train y Test asi como su procesador de Sklearn.
-3. Ejecutar el DAG `train_student_performance`, que entrena el modelo, lo compara contra el champion actual y lo promueve si es mejor. La primera vez que se corre, este entrenamiento pasa a ser el champion.
+2. Ejecutar el DAG de ETL en Airflow llamado `process_etl_student_performance`. Esto descargara el dataset y almacenara en el bucket la version cruda y la version procesada con su division en Train y Test asi como su procesador de Sklearn. Una vez finalizado, este dispara la ejecución del DAG `train_student_performance`.
+3. Esperar que termine de ejecutarse el DAG `train_student_performance`.
 4. Ingresar al frontend en `http://localhost:8081`, o probar la API directamente en `http://localhost:8800/docs` (Swagger interactivo).
 5. Hacer una predicción individual completando el formulario, o subir un CSV con varios estudiantes para predicción en batch (ver [Frontend](#frontend)).
 

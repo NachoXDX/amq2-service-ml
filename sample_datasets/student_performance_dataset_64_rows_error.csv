@@ -1,0 +1,65 @@
+student_id,gender,study_time_hours,attendance_percent,sleep_hours,parental_education,internet_access,extracurricular_activities,part_time_job,previous_grade,final_exam_score,final_grade
+23,Female,3.7,81.8,7.8,High School,A,No,No,74.8,73.4,C
+24,Female,A,82.5,5.4,PhD,No,Yes,No,61.0,71.2,C
+25,Female,4.6,98.3,7.8,None,Yes,Yes,Yes,66.6,97.2,A
+26,Female,1.8,90.6,8.6,High School,Yes,No,No,53.2,76.0,C
+27,Female,1.2,89.6,5.5,Masters,Yes,No,Yes,68.7,78.7,C
+28,Female,5.4,100.0,5.7,High School,No,No,No,83.3,97.4,A
+29,Female,4.0,78.6,8.0,Bachelors,Yes,No,No,78.2,84.2,B
+30,Female,2.4,94.3,7.1,Bachelors,Yes,Yes,No,86.8,89.8,B
+31,Male,5.8,85.6,7.5,Bachelors,Yes,No,Yes,66.4,82.4,B
+32,Male,3.7,87.7,7.2,None,X,Yes,No,86.2,87.7,B
+33,Female,5.3,100.0,7.3,Masters,Yes,Yes,No,67.7,100.0,A
+34,Female,3.6,90.1,5.2,Bachelors,No,Yes,No,87.7,93.3,A
+35,Female,6.6,90.4,8.1,Masters,Yes,Yes,Yes,69.7,100.0,A
+36,Male,6.1,95.7,8.2,None,Yes,Yes,Yes,78.5,92.9,A
+37,Female,3.1,81.4,6.5,High School,Yes,No,Yes,87.7,83.2,B
+38,Male,5.0,76.6,6.7,None,Yes,Yes,No,67.7,81.1,B
+39,Male,4.5,74.6,5.0,High School,Yes,Yes,Yes,72.6,89.5,B
+40,Male,5.6,65.3,7.4,Masters,Yes,Yes,No,85.5,91.6,A
+41,Male,2.1,100.0,7.5,High School,Yes,Yes,Yes,68.4,75.3,C
+42,Male,4.5,74.0,6.7,High School,Yes,No,9,54.1,79.0,C
+43,Female,5.1,82.8,8.1,Bachelors,Yes,Yes,No,95.7,100.0,A
+44,Female,0.9,82.2,6.4,Bachelors,Yes,Yes,No,64.4,79.2,C
+45,Female,1.7,88.1,7.5,Bachelors,No,Yes,No,71.9,70.8,C
+46,Female,0.5,93.2,5.6,High School,No,No,Yes,83.9,61.8,D
+47,Female,3.1,93.6,6.8,Bachelors,Yes,Yes,Yes,62.7,68.0,D
+48,Male,4.6,79.2,6.6,None,Yes,Yes,Yes,57.9,80.3,B
+49,Female,5.8,83.3,7.1,Bachelors,No,Yes,No,73.0,88.6,B
+50,Female,3.6,87.8,6.4,High School,Yes,Yes,No,48.5,69.4,D
+51,Male,5.9,82.5,6.6,Bachelors,Yes,Yes,No,66.5,100.0,A
+52,Female,1.4,100.0,7.8,High School,No,No,No,72.9,81.8,B
+53,Male,0.9,89.9,6.3,Masters,Yes,No,No,66.8,72.6,C
+54,Female,3.4,92.3,4.9,Masters,Yes,No,No,51.5,85.3,B
+55,Male,4.1,91.6,8.9,Bachelors,No,Yes,No,89.1,99.8,A
+56,Female,3.5,96.7,8.5,Bachelors,Yes,Yes,Yes,71.2,84.3,B
+57,Female,0.5,86.8,5.2,Masters,Yes,Yes,No,87.2,71.5,C
+58,Male,3.4,72.0,7.6,Bachelors,Yes,No,No,66.9,84.3,B
+59,Male,1.5,89.0,6.2,Masters,Yes,No,No,59.4,74.5,C
+60,Male,4.5,78.5,7.1,Bachelors,Yes,No,No,73.2,89.5,B
+61,Male,4.0,79.7,7.2,Masters,Yes,Yes,No,67.4,80.4,B
+62,Male,2.1,90.9,6.5,Bachelors,No,Yes,Yes,55.9,71.1,C
+63,Male,2.7,97.4,5.9,Bachelors,Yes,Yes,No,87.6,87.8,B
+64,Male,1.9,85.2,6.0,None,Yes,No,No,62.5,73.0,C
+65,Male,3.4,88.1,5.7,Bachelors,Yes,No,Yes,47.9,80.8,B
+66,Female,4.9,100.0,5.8,Bachelors,Yes,No,No,85.9,97.4,A
+67,Female,2.0,87.4,6.7,High School,Yes,Yes,No,63.9,67.8,D
+68,Male,4.3,100.0,5.9,Bachelors,No,Yes,No,62.7,79.2,C
+69,Female,2.7,90.7,7.6,Bachelors,No,No,Yes,48.8,73.5,C
+70,Female,2.3,67.4,8.6,High School,Yes,No,No,90.9,85.1,B
+71,Female,3.3,92.5,6.1,High School,Yes,Yes,No,54.5,79.6,C
+72,Female,1.9,88.8,7.1,Bachelors,Yes,Yes,No,70.7,77.4,C
+73,Male,2.7,97.9,7.4,Masters,Yes,Yes,No,81.0,94.6,A
+74,Female,1.7,91.7,7.4,Bachelors,Yes,Yes,No,75.1,77.6,C
+75,Male,6.4,83.6,6.9,High School,Yes,Yes,No,69.3,99.9,A
+76,Female,3.6,72.8,7.7,Masters,No,No,No,49.6,64.4,D
+77,Female,2.5,82.9,7.4,High School,Yes,Yes,No,60.3,71.9,C
+78,Female,3.8,76.5,5.3,Bachelors,Yes,Yes,No,72.3,79.3,C
+79,Male,3.3,79.2,7.8,High School,Yes,Yes,Yes,60.6,74.9,C
+80,Female,3.2,90.9,7.9,High School,Yes,No,No,72.4,87.4,B
+81,Male,4.4,100.0,5.9,High School,Yes,No,No,78.2,97.6,A
+82,Female,4.6,88.9,6.8,Bachelors,Yes,Yes,No,81.6,74.5,C
+83,Male,2.7,73.0,7.6,High School,Yes,No,Yes,55.3,64.1,D
+84,Female,2.6,89.4,6.5,Bachelors,Yes,No,No,96.4,90.0,A
+85,Male,3.1,97.0,8.1,Bachelors,Yes,Yes,Yes,79.2,99.3,A
+86,Male,0.5,78.9,9.6,Bachelors,Yes,Yes,Yes,70.0,63.9,D

@@ -6,6 +6,11 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <hr>
+        <h2>Predicción en batch (CSV)</h2>
+        <input type="file" id="csv-input" accept=".csv">
+        <button id="batch-predict-btn" disabled>Predecir batch</button>
+        <div id="batch-result"></div>
     <main>
         <h1>Predicción de Rendimiento Estudiantil</h1>
         <p id="model-info">Cargando información del modelo...</p>
@@ -41,6 +46,7 @@
                     <option value="Bachelors">Bachelors</option>
                     <option value="Masters">Masters</option>
                     <option value="PhD">PhD</option>
+                    <option value="None">No especificado</option>
                 </select>
             </label>
 

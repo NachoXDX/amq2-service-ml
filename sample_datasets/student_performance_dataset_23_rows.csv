@@ -1,0 +1,24 @@
+student_id,gender,study_time_hours,attendance_percent,sleep_hours,parental_education,internet_access,extracurricular_activities,part_time_job,previous_grade,final_exam_score,final_grade
+1,Male,4.0,98.0,6.5,Bachelors,Yes,Yes,No,76.9,100.0,A
+2,Female,6.3,100.0,5.7,High School,Yes,Yes,Yes,75.5,100.0,A
+3,Male,4.9,85.3,7.9,Bachelors,Yes,No,Yes,88.5,97.3,A
+4,Male,2.6,77.5,8.0,None,Yes,Yes,No,85.1,83.8,B
+5,Male,2.2,89.6,4.6,Bachelors,Yes,No,Yes,61.8,68.3,D
+6,Female,4.2,78.2,5.7,High School,Yes,No,No,79.8,81.6,B
+7,Male,1.5,100.0,5.0,High School,Yes,Yes,Yes,58.6,69.6,D
+8,Male,6.2,86.4,6.0,High School,Yes,Yes,No,78.4,88.0,B
+9,Male,5.3,81.3,6.7,Bachelors,Yes,No,No,63.8,84.4,B
+10,Female,2.8,86.8,5.1,Bachelors,Yes,Yes,No,57.7,74.3,C
+11,Male,0.9,71.5,5.7,High School,Yes,No,Yes,73.4,68.9,D
+12,Male,5.5,75.3,5.6,None,Yes,Yes,No,37.9,76.7,C
+13,Male,3.3,97.0,7.0,Masters,Yes,Yes,Yes,49.0,82.6,B
+14,Male,5.4,78.4,6.9,Bachelors,No,No,No,67.9,93.3,A
+15,Female,1.1,74.5,5.9,Masters,Yes,Yes,Yes,71.0,73.9,C
+16,Male,2.6,90.4,7.0,High School,Yes,Yes,No,65.6,84.8,B
+17,Female,3.5,96.9,6.1,Bachelors,Yes,Yes,No,51.0,81.5,B
+18,Female,3.6,92.2,6.5,Bachelors,Yes,Yes,Yes,60.2,75.5,C
+19,Female,2.8,95.0,8.8,Masters,No,Yes,No,74.7,89.7,B
+20,Male,4.4,77.4,8.4,Masters,No,No,Yes,77.0,92.8,A
+21,Female,1.9,70.8,5.2,High School,Yes,Yes,No,69.8,73.5,C
+22,Male,3.3,100.0,7.8,None,Yes,Yes,No,83.9,100.0,A
+23,Female,3.7,81.8,7.8,High School,No,No,No,74.8,73.4,C

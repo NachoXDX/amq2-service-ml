@@ -1,6 +1,6 @@
 body {
     font-family: system-ui, sans-serif;
-    max-width: 480px;
+    max-width: 720px;
     margin: 2rem auto;
     padding: 0 1rem;
     color: #222;
@@ -53,4 +53,26 @@ button {
 
 #result.error {
     background: #fce8e6;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 0.4rem;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+#result ul, #batch-result ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+#result li, #batch-result li {
+    margin-bottom: 0.3rem;
 }

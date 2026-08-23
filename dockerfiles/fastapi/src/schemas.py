@@ -6,7 +6,7 @@ class StudentFeatures(BaseModel):
     study_time_hours: float = Field(ge=0)
     attendance_percent: float = Field(ge=0, le=100)
     sleep_hours: float = Field(ge=0)
-    parental_education: Literal["High School", "Bachelors", "Masters", "PhD"]
+    parental_education: Literal["High School", "Bachelors", "Masters", "PhD", "None"]
     internet_access: Literal["Yes", "No"]
     extracurricular_activities: Literal["Yes", "No"]
     part_time_job: Literal["Yes", "No"]
